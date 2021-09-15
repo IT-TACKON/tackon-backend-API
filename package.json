@@ -1,0 +1,39 @@
+{
+  "name": "tackon-backend-api",
+  "version": "1.0.0",
+  "description": "Backend REST API untuk aplikasi Tackon",
+  "scripts": {
+    "start": "node dist/app.js",
+    "debug": "nodemon --exec ts-node src/app.ts",
+    "lint": "eslint src --ext .ts",
+    "build": "tsc --project src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IT-TACKON/tackon-backend-API.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/IT-TACKON/tackon-backend-API/issues"
+  },
+  "homepage": "https://github.com/IT-TACKON/tackon-backend-API#readme",
+  "devDependencies": {
+    "@types/dotenv": "^8.2.0",
+    "@types/express": "^4.17.13",
+    "@types/node": "^16.9.1",
+    "@typescript-eslint/eslint-plugin": "^4.31.1",
+    "@typescript-eslint/parser": "^4.31.1",
+    "eslint": "^7.32.0",
+    "nodemon": "^2.0.12",
+    "ts-node": "^10.2.1",
+    "typescript": "^4.4.3"
+  },
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "knex": "^0.95.11",
+    "mysql2": "^2.3.0"
+  }
+}
