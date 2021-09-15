@@ -1,55 +1,103 @@
-import jwt, { JwtPayload, VerifyErrors } from 'jsonwebtoken'
+import db from '../utils/database'
+import jwt from 'jsonwebtoken'
+import { uuid } from 'uuidv4'
 import { Request, Response, NextFunction } from 'express'
 import { User } from '../interface/user'
-import { ErrorResponse, responseStatus } from '../interface/response'
+import { GeneralResponse, responseStatus } from '../interface/response'
 import { ACCESS_TOKEN_SECRET } from '../utils/env'
 
-export function authenticateToken(req: Request, res: Response, next: NextFunction): void {
+
+export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const token: string = req.headers['authorization'] ?? ''
-        if (token === '') {
-            res.status(401).json(<ErrorResponse>{
+        // Validate request payload
+        if (!req.body.email || !req.body.password) {
+            res.status(400).json(<GeneralResponse>{
                 status: responseStatus.error,
-                message: 'Cannot recieve or invalid token'
+                message: 'Request payload is not fulfilled'
             })
             return
         }
-        jwt.verify(token, ACCESS_TOKEN_SECRET, (err: VerifyErrors | null, user: JwtPayload | undefined) => {
-            if (err) {
-                res.status(403).json(<ErrorResponse>{
-                    status: responseStatus.error,
-                    message: 'Failed to verify token'
-                })
-                return
-            }
-            console.log(user)
-            next()
-        })
 
+        const requestUser = {
+            email: req.body.email,
+            password: req.body.password
+        }
+
+        if (ACCESS_TOKEN_SECRET === '') {
+            throw Error('Missing ACCESS_TOKEN_SECRET')
+        }
+
+        // User data validation
+        const user: User | undefined = await db<User>('user')
+            .select('*')
+            .where('email', requestUser.email)
+            .first()
+
+        if (!user) {
+            res.status(400).json(<GeneralResponse>{
+                status: responseStatus.error,
+                message: 'User is not registered'
+            })
+            return
+        }
+        if (requestUser.password != user.password) {
+            res.status(400).json(<GeneralResponse>{
+                status: responseStatus.error,
+                message: 'Incorrect password'
+            })
+            return
+        }
+
+        const accessToken: string = jwt.sign({
+            id: user.id,
+            email: user.email,
+            username: user.username
+        }, ACCESS_TOKEN_SECRET)
+        res.status(200).json({
+            status: responseStatus.success,
+            accessToken: accessToken
+        })
     } catch (error) {
         next(error)
     }
 }
 
-export function login(req: Request, res: Response, next: NextFunction): void {
+export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const user: User = {
-            id: req.body.id,
-            email: req.body.email,
-            username: req.body.username,
-            password: req.body.password,
-            created_at: req.body.created_at
+        // Validate request payload
+        if (!req.body.email || !req.body.username || !req.body.password) {
+            res.status(400).json(<GeneralResponse>{
+                status: responseStatus.error,
+                message: 'Request payload is not fulfilled'
+            })
+            return
         }
 
-        if (ACCESS_TOKEN_SECRET === '') {
-            throw new Error('Missing ACCESS_TOKEN_SECRET')
+        const user: User = {
+            // TODO: uuidv4() is deprecated. Use v4() from the uuid module instead
+            id: uuid(),
+            email: req.body.email,
+            username: req.body.username,
+            password: req.body.password
         }
-        const accessToken: string = jwt.sign(user, ACCESS_TOKEN_SECRET)
-        res.status(200).json({
-            status: responseStatus.success,
-            user: { ...user, accessToken: accessToken }
+
+        await db('user').insert(user).catch((err: Error) => {
+            const sqlError: string = err.message.split(' - ')[1]
+            if (sqlError.split(' ')[0] === 'Duplicate') {
+                res.status(400).json(<GeneralResponse>{
+                    status: responseStatus.error,
+                    message: 'User already registered'
+                })
+                return
+            }
+            throw Error(sqlError)
         })
-    } catch (error) {
+
+        res.json(<GeneralResponse>{
+            status: responseStatus.success,
+            message: 'Successfully created new user, please log in'
+        })
+    } catch (error: unknown) {
         next(error)
     }
 }

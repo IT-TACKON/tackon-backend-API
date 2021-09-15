@@ -1,8 +1,8 @@
-import { User } from './user'
-
 export interface Question {
     id: string
+    user_id: string
     title: string
     text: string
-    author: User
+    upvote: number
+    created_at: number
 }

@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS `tackon`.`user` (
   `email` VARCHAR(320) NOT NULL,
   `password` VARCHAR(36) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE)
+  UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE,
+  UNIQUE INDEX `email_UNIQUE` (`email` ASC) VISIBLE)
 ENGINE = InnoDB;
 
 
@@ -35,8 +36,16 @@ CREATE TABLE IF NOT EXISTS `tackon`.`question` (
   `title` VARCHAR(45) NOT NULL,
   `text` TEXT NOT NULL,
   `upvote` INT NOT NULL DEFAULT 0,
+  `created_at` TINYINT NOT NULL,
+  `user_id` VARCHAR(36) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE)
+  UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE,
+  INDEX `fk_question_user1_idx` (`user_id` ASC) VISIBLE,
+  CONSTRAINT `fk_question_user1`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `tackon`.`user` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
@@ -49,6 +58,7 @@ CREATE TABLE IF NOT EXISTS `tackon`.`comment` (
   `question_id` VARCHAR(36) NOT NULL,
   `text` TEXT NOT NULL,
   `is_solving_question` TINYINT NOT NULL DEFAULT 0,
+  `created_at` TINYINT NOT NULL,
   PRIMARY KEY (`user_id`, `question_id`, `id`),
   INDEX `fk_user_has_question_question1_idx` (`question_id` ASC) VISIBLE,
   INDEX `fk_user_has_question_user_idx` (`user_id` ASC) VISIBLE,
