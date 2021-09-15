@@ -20,4 +20,5 @@ Backend REST API untuk aplikasi Tackon
 | 💥          | `:boom:`           | Refactor & penghapusan   |
 | 🤖          | `:robot:`          | Menambah otomasi         |
 | 🚀          | `:rocket:`         | Deployment               |
+| :lock:      | `:lock:`           | Keamanan                 |
 | ✨          | `:sparkles:`       | Lain lain                |

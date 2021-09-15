@@ -1,9 +1,11 @@
 import * as env from './utils/env'
 import express from 'express'
+import helmet from 'helmet'
 import router from './route'
 import { notFound, internalServerError } from './controller/error'
 
 const app = express()
+app.use(helmet())
 app.use(express.json())
 
 app.use(router)
