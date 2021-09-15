@@ -3,7 +3,7 @@ import { Request, Response, NextFunction, ErrorRequestHandler } from 'express'
 export function notFound(_req: Request, res: Response): void {
     res.status(404).json({
         'status': 'error',
-        'message': 'Endpoint not found'
+        'message': 'Request endpoint not found'
     })
 }
 
