@@ -14,8 +14,17 @@ export const db = knex({
 })
 
 export async function fetchQuestionWithAuthor(): Promise<QuestionWithAuthor[]> {
-    return await db('question')
+    return await db<QuestionWithAuthor>('question')
         .join('user', 'user.id', 'question.user_id')
         .select('question.id', 'user.id as user_id', 'user.username as author', 'question.title', 'question.text', 'question.upvote', 'question.created_at')
         .orderBy('created_at', 'desc')
+}
+
+export async function fetchQuestionWithAuthorById(questionId: string): Promise<QuestionWithAuthor> {
+    return await db<QuestionWithAuthor>('question')
+        .join('user', 'user.id', 'question.user_id')
+        .select('question.id', 'user.id as user_id', 'user.username as author', 'question.title', 'question.text', 'question.upvote', 'question.created_at')
+        .orderBy('created_at', 'desc')
+        .where('question.id', questionId)
+        .first()
 }

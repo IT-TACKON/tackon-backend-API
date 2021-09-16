@@ -11,9 +11,11 @@ router.post('/register', register)
 
 // Question related endpoint
 router.get('/questions', authenticateToken, questionController.getQuestions)
-router.get('/questions/detail/:question_id', authenticateToken, questionController.getQuestionByQuestionId)
-router.get('/questions/search/:keyword', authenticateToken, questionController.getQuestionByKeyword)
 router.post('/questions', authenticateToken, questionController.createNewQuestion)
+router.get('/questions/:question_id', authenticateToken, questionController.getQuestionByQuestionId)
+router.patch('/questions/:question_id', authenticateToken, questionController.updateQuestion)
+router.delete('/questions/:question_id', authenticateToken, questionController.deleteQuestion)
+router.get('/questions/search/:keyword', authenticateToken, questionController.getQuestionByKeyword)
 
 // User related endpoint
 router.get('/user/questions', authenticateToken, questionController.getQuestionByAuthorId)
