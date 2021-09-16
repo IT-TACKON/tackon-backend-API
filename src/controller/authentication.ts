@@ -1,6 +1,6 @@
 import db from '../utils/database'
 import jwt from 'jsonwebtoken'
-import { uuid } from 'uuidv4'
+import { v4 as uuidv4 } from 'uuid'
 import { Request, Response, NextFunction } from 'express'
 import { User } from '../interface/user'
 import { GeneralResponse, responseStatus } from '../interface/response'
@@ -74,8 +74,7 @@ export async function register(req: Request, res: Response, next: NextFunction):
         }
 
         const user: User = {
-            // TODO: uuidv4() is deprecated. Use v4() from the uuid module instead
-            id: uuid(),
+            id: uuidv4(),
             email: req.body.email,
             username: req.body.username,
             password: req.body.password
