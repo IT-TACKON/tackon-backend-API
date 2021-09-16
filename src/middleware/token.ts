@@ -3,7 +3,9 @@ import jwt, { JwtPayload, VerifyErrors } from 'jsonwebtoken'
 import { GeneralResponse, responseStatus } from '../interface/response'
 import { ACCESS_TOKEN_SECRET } from '../utils/env'
 
-/** Verify jwt access token middleware */
+/** Middleware to verify jwt access token.
+ * Request to endpoint with this middleware must provide jwt token in header with name `authorization`.
+ * User must login to get jwt token*/
 export function authenticateToken(req: Request, res: Response, next: NextFunction): void {
     try {
         const token: string = req.headers['authorization'] ?? ''
@@ -15,14 +17,13 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
             return
         }
         jwt.verify(token, ACCESS_TOKEN_SECRET, (err: VerifyErrors | null, user: JwtPayload | undefined) => {
-            if (err) {
+            if (err || !user) {
                 res.status(403).json(<GeneralResponse>{
                     status: responseStatus.error,
                     message: 'Invalid token'
                 })
                 return
             }
-            console.log(user)
             next()
         })
     } catch (error) {

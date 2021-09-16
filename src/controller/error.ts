@@ -17,8 +17,3 @@ export function internalServerError(error: ErrorRequestHandler, _req: Request, r
         message: error.toString()
     })
 }
-
-/** Simulate error handling middleware with dummy Error */
-export function errorTest(_req: Request, _res: Response, next: NextFunction): void {
-    next(new Error('Internal server error'))
-}
