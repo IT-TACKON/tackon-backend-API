@@ -24,6 +24,7 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
                 })
                 return
             }
+            res.locals.user = user
             next()
         })
     } catch (error) {

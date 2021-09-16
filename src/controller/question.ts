@@ -1,13 +1,55 @@
+import { db, fetchQuestionWithAuthor } from '../utils/database'
+import getCurrentDateTime from '../utils/date'
+import { v4 as uuidv4 } from 'uuid'
 import { Request, Response, NextFunction } from 'express'
-import { Question } from '../interface/question'
+import { Question, QuestionWithAuthor } from '../interface/question'
 import { GeneralResponse, responseStatus } from '../interface/response'
 
-/** Fetch all questions data */
-export function getQuestions(_req: Request, res: Response, next: NextFunction): void {
+
+export async function createNewQuestion(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+        const userId: string = res.locals.user.id
+        const title: string = req.body.title
+        const text: string = req.body.text
+        if (!userId) {
+            res.status(400).json(<GeneralResponse>{
+                status: responseStatus.error,
+                message: 'Author id not identified'
+            })
+            return
+        }
+        if (!title || !text) {
+            res.status(400).json(<GeneralResponse>{
+                status: responseStatus.error,
+                message: 'Request body is not fulfilled'
+            })
+            return
+        }
+        const question: Question = {
+            id: uuidv4(),
+            created_at: getCurrentDateTime(),
+            user_id: userId,
+            title: title,
+            text: text,
+            upvote: 0,
+        }
+        await db('question').insert(question)
+        res.status(200).json(<GeneralResponse>{
+            status: responseStatus.success,
+            message: 'Successfully create new question'
+        })
+    } catch (error: unknown) {
+        next(error)
+    }
+}
+
+/** Fetch all questions data */
+export async function getQuestions(_req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+        const questions: QuestionWithAuthor[] = await fetchQuestionWithAuthor()
         res.status(200).json({
             status: responseStatus.success,
-            questions: dummyQuestions
+            questions: questions
         })
     } catch (error: unknown) {
         next(error)
@@ -15,19 +57,20 @@ export function getQuestions(_req: Request, res: Response, next: NextFunction): 
 }
 
 /** Search questions by title as keyword */
-export function getQuestionByKeyword(req: Request, res: Response, next: NextFunction): void {
+export async function getQuestionByKeyword(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const keyword: string = req.params.keyword
         if (!keyword) {
             res.status(400).json(<GeneralResponse>{
                 status: responseStatus.error,
-                message: 'Author id not identified'
+                message: 'Cannot identify author id'
             })
             return
         }
+        const questions: QuestionWithAuthor[] = await fetchQuestionWithAuthor()
         res.status(200).json({
             status: responseStatus.success,
-            questions: dummyQuestions.filter((question: Question) => question.title.includes(keyword))
+            questions: questions.filter((question: QuestionWithAuthor) => question.title.toLowerCase().includes(keyword.toLowerCase()))
         })
     } catch (error: unknown) {
         next(error)
@@ -35,19 +78,20 @@ export function getQuestionByKeyword(req: Request, res: Response, next: NextFunc
 }
 
 /** Get questions asked by specific user */
-export function getQuestionByAuthorId(req: Request, res: Response, next: NextFunction): void {
+export async function getQuestionByAuthorId(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const param_id: string = req.params.user_id
-        if (!param_id) {
+        const userId: string = res.locals.user.id
+        if (!userId) {
             res.status(400).json(<GeneralResponse>{
                 status: responseStatus.error,
                 message: 'Author id not identified'
             })
             return
         }
+        const questions: QuestionWithAuthor[] = await fetchQuestionWithAuthor()
         res.status(200).json({
             status: responseStatus.success,
-            questions: dummyQuestions.filter((question: Question) => question.user_id == param_id)
+            questions: questions.filter((question: QuestionWithAuthor) => question.user_id == userId)
         })
     } catch (error: unknown) {
         next(error)
@@ -55,7 +99,7 @@ export function getQuestionByAuthorId(req: Request, res: Response, next: NextFun
 }
 
 /** Get single specific question by it's id */
-export function getQuestionByQuestionId(req: Request, res: Response, next: NextFunction): void {
+export async function getQuestionByQuestionId(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const question_id: string = req.params.question_id
         if (!question_id) {
@@ -65,7 +109,8 @@ export function getQuestionByQuestionId(req: Request, res: Response, next: NextF
             })
             return
         }
-        const question: Question | undefined = dummyQuestions.find((question: Question) => question.id == question_id)
+        const questions: QuestionWithAuthor[] = await fetchQuestionWithAuthor()
+        const question: QuestionWithAuthor | undefined = questions.find((question: QuestionWithAuthor) => question.id == question_id)
         if (!question) {
             res.status(400).json(<GeneralResponse>{
                 status: responseStatus.error,
@@ -81,22 +126,3 @@ export function getQuestionByQuestionId(req: Request, res: Response, next: NextF
         next(error)
     }
 }
-
-const dummyQuestions: Question[] = [
-    <Question>{
-        id: '99e125f5-17ba-4656-aa40-46b0b19bf98d',
-        title: 'kenapa perlu itu',
-        text: 'ddawdas',
-        upvote: 100,
-        user_id: '872f5fce-1e1b-4e6e-ac55-f08636f0544a',
-        created_at: Date.now()
-    },
-    <Question>{
-        id: 'd506b6e8-6a56-429f-b5a5-c66d9833560f',
-        title: 'apa yang dimaksud',
-        text: 'dasd',
-        upvote: 100,
-        user_id: '123f5fce-1e1b-4e6e-ac55-f08636f0544a',
-        created_at: Date.now()
-    }
-]
