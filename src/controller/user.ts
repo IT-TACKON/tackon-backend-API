@@ -5,6 +5,10 @@ import { Request, Response, NextFunction } from 'express'
 import { GeneralResponse, responseStatus } from '../interface/response'
 import { ACCESS_TOKEN_SECRET } from '../utils/env'
 
+/**
+ * User information except password is already inside jwt token.
+ * This function will send translated info as json from token
+ * */
 export function getMyProfile(_req: Request, res: Response, next: NextFunction): void {
     try {
         const user = res.locals.user
@@ -24,6 +28,11 @@ export function getMyProfile(_req: Request, res: Response, next: NextFunction): 
     }
 }
 
+/**
+ * Update user data by given new data from request body.
+ * If request not given full data payload, the old data will be used.
+ * Meaning, function will update only given new data
+ */
 export async function updateMyData(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const userInToken = res.locals.user
@@ -57,7 +66,7 @@ export async function updateMyData(req: Request, res: Response, next: NextFuncti
             if (currentPassword != userInDatabase.password) {
                 res.status(400).json(<GeneralResponse>{
                     status: responseStatus.error,
-                    message: 'Wrong user password'
+                    message: 'Incorrect password'
                 })
                 return
             }
@@ -77,6 +86,50 @@ export async function updateMyData(req: Request, res: Response, next: NextFuncti
         res.status(200).json({
             status: responseStatus.success,
             accessToken: accessToken
+        })
+    } catch (error: unknown) {
+        next(error)
+    }
+}
+
+/** Delete account of token id. Need password for confirmation */
+export async function deleteAccount(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+        const userInToken = res.locals.user
+        if (!userInToken) {
+            res.status(400).json(<GeneralResponse>{
+                status: responseStatus.error,
+                message: 'Author id not identified'
+            })
+            return
+        }
+        const userInDatabase: User | undefined = await db<User>('user').select('*').where('id', userInToken.id).first()
+        if (!userInDatabase) {
+            res.status(400).json(<GeneralResponse>{
+                status: responseStatus.error,
+                message: 'User is not registered'
+            })
+            return
+        }
+        const password: string | undefined = req.body.password
+        if (!password) {
+            res.status(400).json(<GeneralResponse>{
+                status: responseStatus.error,
+                message: 'Request payload is not fulfilled'
+            })
+            return
+        }
+        if (password != userInDatabase.password) {
+            res.status(400).json(<GeneralResponse>{
+                status: responseStatus.error,
+                message: 'Incorrect password'
+            })
+            return
+        }
+        await db<User>('user').where('id', userInDatabase.id).delete()
+        res.status(200).json(<GeneralResponse>{
+            status: responseStatus.success,
+            message: 'Successfully deleted account'
         })
     } catch (error: unknown) {
         next(error)

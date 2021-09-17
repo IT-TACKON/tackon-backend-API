@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { authenticateToken } from './middleware/token'
 import { register, login } from './controller/authentication'
-import { getMyProfile, updateMyData } from './controller/user'
+import { deleteAccount, getMyProfile, updateMyData } from './controller/user'
 import * as questionController from './controller/question'
 
 const router: Router = Router()
@@ -20,7 +20,8 @@ router.get('/questions/search/:keyword', authenticateToken, questionController.g
 
 // User related endpoint
 router.get('/user', authenticateToken, getMyProfile)
-router.patch('/user', authenticateToken, updateMyData)
 router.get('/user/questions', authenticateToken, questionController.getQuestionByAuthorId)
+router.patch('/user', authenticateToken, updateMyData)
+router.delete('/user', authenticateToken, deleteAccount)
 
 export default router
