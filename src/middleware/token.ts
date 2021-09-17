@@ -33,10 +33,10 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
                 .where('email', user.email)
                 .first()
 
-            if (!userInDatabase) {
+            if (!userInDatabase || userInDatabase.username != user.username) {
                 res.status(400).json(<GeneralResponse>{
                     status: responseStatus.error,
-                    message: 'User is not registered'
+                    message: 'Wrong token or user is not registered'
                 })
                 return
             }
