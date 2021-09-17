@@ -1,30 +1,22 @@
-import { db, fetchQuestionWithAuthor, fetchQuestionWithAuthorById } from '../utils/database'
 import getCurrentDateTime from '../utils/date'
 import { v4 as uuidv4 } from 'uuid'
 import { Request, Response, NextFunction } from 'express'
+import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../interface/customError'
 import { Question, QuestionWithAuthor } from '../interface/question'
 import { GeneralResponse, responseStatus } from '../interface/response'
+import { db, fetchQuestionWithAuthor, fetchQuestionWithAuthorById } from '../utils/database'
 
 
+/** Create new question. Require title and text from request body */
 export async function createNewQuestion(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+        // Validate required request payload
         const userId: string = res.locals.user.id
         const title: string = req.body.title
         const text: string = req.body.text
-        if (!userId) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Author id not identified'
-            })
-            return
-        }
-        if (!title || !text) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Request body is not fulfilled'
-            })
-            return
-        }
+        if (!userId) throw new RequestPayloadError('Author id not identified')
+        if (!title || !text) throw new RequestPayloadError('Request body is not fulfilled')
+
         const question: Question = {
             id: uuidv4(),
             created_at: getCurrentDateTime(),
@@ -46,39 +38,19 @@ export async function createNewQuestion(req: Request, res: Response, next: NextF
 /** Update existing title and text question */
 export async function updateQuestion(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+        // Validate request payload
         const userId: string = res.locals.user.id
         const questionId: string = req.params.question_id
         const newTitle: string = req.body.title
         const newText: string = req.body.text
-        if (!userId) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Author id not identified'
-            })
-            return
-        }
-        if (!newTitle || !newText || !questionId) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Request body or parameter is not fulfilled'
-            })
-            return
-        }
+        if (!userId) throw new RequestPayloadError('Author id not identified')
+        if (!newTitle || !newText || !questionId) throw new RequestPayloadError('Request body or parameter is not fulfilled')
+
+        // Only allow user to update his/her own question
         const question: Question | undefined = await db<Question>('question').select('*').where('id', questionId).first()
-        if (!question) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Cannot find question'
-            })
-            return
-        }
-        if (userId != question.user_id) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'User not authorized to edit someone else\'s questions'
-            })
-            return
-        }
+        if (!question) throw new NotFoundError('Cannot find question')
+        if (userId != question.user_id) throw new UnauthorizedError('Cannot edit someone else\'s questions')
+
         await db<Question>('question')
             .where('id', questionId)
             .update({ 'title': newTitle, 'text': newText })
@@ -93,40 +65,20 @@ export async function updateQuestion(req: Request, res: Response, next: NextFunc
 
 export async function deleteQuestion(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+        // Validate request payload
         const userId: string = res.locals.user.id
         const questionId: string = req.params.question_id
-        if (!userId) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Author id not identified'
-            })
-            return
-        }
-        if (!questionId) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Question id is not provided'
-            })
-            return
-        }
-        const question: Question | undefined = await db<Question>('question').select('*').where('id', questionId).first()
-        if (!question) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Cannot find question'
-            })
-            return
-        }
-        if (userId != question.user_id) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'User not authorized to delete someone else\'s questions'
-            })
-            return
-        }
-        await db<Question>('question')
+        if (!userId) throw new RequestPayloadError('Author id not identified')
+        if (!questionId) throw new RequestPayloadError('Question id is not provided')
+
+        const question: Question | undefined = await db<Question>('question')
+            .select('*')
             .where('id', questionId)
-            .delete()
+            .first()
+        if (!question) throw new NotFoundError('Cannot find question')
+        if (userId != question.user_id) throw new UnauthorizedError('User not authorized to delete someone else\'s questions')
+
+        await db<Question>('question').where('id', questionId).delete()
         res.status(200).json(<GeneralResponse>{
             status: responseStatus.success,
             message: 'Successfully deleted question'
@@ -153,17 +105,14 @@ export async function getQuestions(_req: Request, res: Response, next: NextFunct
 export async function getQuestionByKeyword(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const keyword: string = req.params.keyword
-        if (!keyword) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Cannot identify author id'
-            })
-            return
-        }
+        if (!keyword) throw new RequestPayloadError('Request body is not fulfilled')
         const questions: QuestionWithAuthor[] = await fetchQuestionWithAuthor()
+        const searchedQuestions: QuestionWithAuthor[] = questions.filter((question: QuestionWithAuthor) => {
+            return question.title.toLowerCase().includes(keyword.toLowerCase())
+        })
         res.status(200).json({
             status: responseStatus.success,
-            questions: questions.filter((question: QuestionWithAuthor) => question.title.toLowerCase().includes(keyword.toLowerCase()))
+            questions: searchedQuestions
         })
     } catch (error: unknown) {
         next(error)
@@ -174,17 +123,12 @@ export async function getQuestionByKeyword(req: Request, res: Response, next: Ne
 export async function getQuestionByAuthorId(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const userId: string = res.locals.user.id
-        if (!userId) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Author id not identified'
-            })
-            return
-        }
+        if (!userId) throw new RequestPayloadError('Author id not identified')
         const questions: QuestionWithAuthor[] = await fetchQuestionWithAuthor()
+        const userOwnedQuestions: QuestionWithAuthor[] = questions.filter((question: QuestionWithAuthor) => question.user_id == userId)
         res.status(200).json({
             status: responseStatus.success,
-            questions: questions.filter((question: QuestionWithAuthor) => question.user_id == userId)
+            questions: userOwnedQuestions
         })
     } catch (error: unknown) {
         next(error)
@@ -195,21 +139,9 @@ export async function getQuestionByAuthorId(_req: Request, res: Response, next: 
 export async function getQuestionByQuestionId(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const question_id: string = req.params.question_id
-        if (!question_id) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Question id is not provided'
-            })
-            return
-        }
+        if (!question_id) throw new RequestPayloadError('Question id is not provided')
         const question: QuestionWithAuthor = await fetchQuestionWithAuthorById(question_id)
-        if (!question) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Question not found'
-            })
-            return
-        }
+        if (!question) throw new NotFoundError('Question not found')
         res.status(200).json({
             status: responseStatus.success,
             question: question

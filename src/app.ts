@@ -3,7 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import router from './route'
-import { notFound, internalServerError } from './controller/error'
+import { notFoundRoute, errorHandlingRoute } from './controller/error'
 
 // Middleware and security
 const app: express.Express = express()
@@ -14,8 +14,8 @@ app.use(express.json())
 
 // Routing
 app.use(router)
-app.use(notFound)
-app.use(internalServerError)
+app.use(notFoundRoute)
+app.use(errorHandlingRoute)
 
 // Deploy server
 const port: number = env.DEPLOY_PORT
