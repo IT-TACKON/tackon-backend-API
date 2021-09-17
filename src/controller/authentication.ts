@@ -1,5 +1,5 @@
-import { db } from '../utils/database'
 import jwt from 'jsonwebtoken'
+import { db } from '../utils/database'
 import { v4 as uuidv4 } from 'uuid'
 import { Request, Response, NextFunction } from 'express'
 import { User } from '../interface/user'
