@@ -47,7 +47,7 @@ export async function register(req: Request, res: Response, next: NextFunction):
     try {
         // Perform validation
         if (!req.body.email || !req.body.username || !req.body.password) throw new RequestPayloadError('Request payload is not fulfilled')
-        const isAlreadyRegistered: boolean = (await db<User>('user').select('*').where('email', req.body.email)).length >= 0
+        const isAlreadyRegistered: boolean = (await db<User>('user').select('*').where('email', req.body.email)).length > 0
         if (isAlreadyRegistered) throw new UnauthorizedError('User already registered')
         const password: string = await hashPassword(req.body.password)
         const user: User = {

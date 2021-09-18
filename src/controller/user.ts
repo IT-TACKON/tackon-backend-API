@@ -4,6 +4,8 @@ import { User } from '../interface/user'
 import { Request, Response, NextFunction } from 'express'
 import { GeneralResponse, responseStatus } from '../interface/response'
 import { ACCESS_TOKEN_SECRET } from '../utils/env'
+import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../interface/customError'
+import { hashPassword, isPasswordCorrent } from '../utils/password'
 
 /**
  * User information except password is already inside jwt token.
@@ -12,13 +14,7 @@ import { ACCESS_TOKEN_SECRET } from '../utils/env'
 export function getMyProfile(_req: Request, res: Response, next: NextFunction): void {
     try {
         const user = res.locals.user
-        if (!user) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Author id not identified'
-            })
-            return
-        }
+        if (!user) throw new UnauthorizedError('Author id not identified')
         res.status(200).json({
             status: responseStatus.success,
             user: user
@@ -36,40 +32,17 @@ export function getMyProfile(_req: Request, res: Response, next: NextFunction): 
 export async function updateMyData(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const userInToken = res.locals.user
-        if (!userInToken) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Author id not identified'
-            })
-            return
-        }
+        if (!userInToken) throw new UnauthorizedError('Author id not identified')
         const userInDatabase: User | undefined = await db<User>('user').select('*').where('id', userInToken.id).first()
-        if (!userInDatabase) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'User is not registered'
-            })
-            return
-        }
-        if (!req.body.email && !req.body.username && !req.body.newPassword) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'New information is not provided'
-            })
-            return
-        }
+        if (!userInDatabase) throw new NotFoundError('User is not registered')
+        if (!req.body.email && !req.body.username && !req.body.newPassword) throw new RequestPayloadError('Request payload not is fulfilled')
         const newEmail: string = req.body.email ?? userInDatabase.email
         const newUsername: string = req.body.username ?? userInDatabase.username
-        const newPassword: string = req.body.newPassword ?? userInDatabase.password
+        let newPassword: string = req.body.newPassword ?? userInDatabase.password
         const currentPassword: string | undefined = req.body.currentPassword
         if (currentPassword) {
-            if (currentPassword != userInDatabase.password) {
-                res.status(400).json(<GeneralResponse>{
-                    status: responseStatus.error,
-                    message: 'Incorrect password'
-                })
-                return
-            }
+            if (!isPasswordCorrent(currentPassword, userInDatabase.password)) throw new UnauthorizedError('Incorrect password')
+            newPassword = await hashPassword(currentPassword)
         }
         const newUser: User = {
             id: userInDatabase.id,
@@ -96,36 +69,12 @@ export async function updateMyData(req: Request, res: Response, next: NextFuncti
 export async function deleteAccount(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const userInToken = res.locals.user
-        if (!userInToken) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Author id not identified'
-            })
-            return
-        }
+        if (!userInToken) throw new UnauthorizedError('Author id not identified')
         const userInDatabase: User | undefined = await db<User>('user').select('*').where('id', userInToken.id).first()
-        if (!userInDatabase) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'User is not registered'
-            })
-            return
-        }
+        if (!userInDatabase) throw new NotFoundError('User is not registered')
         const password: string | undefined = req.body.password
-        if (!password) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Request payload is not fulfilled'
-            })
-            return
-        }
-        if (password != userInDatabase.password) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Incorrect password'
-            })
-            return
-        }
+        if (!password) throw new RequestPayloadError('Request payload is not fulfilled')
+        if (!isPasswordCorrent(password, userInDatabase.password)) throw new UnauthorizedError('Incorrect password')
         await db<User>('user').where('id', userInDatabase.id).delete()
         res.status(200).json(<GeneralResponse>{
             status: responseStatus.success,
