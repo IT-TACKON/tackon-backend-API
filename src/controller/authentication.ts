@@ -5,26 +5,17 @@ import { Request, Response, NextFunction } from 'express'
 import { User } from '../interface/user'
 import { GeneralResponse, responseStatus } from '../interface/response'
 import { ACCESS_TOKEN_SECRET } from '../utils/env'
+import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../interface/customError'
 
 
 export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         // Validate request payload
-        if (!req.body.email || !req.body.password) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Request payload is not fulfilled'
-            })
-            return
-        }
-
+        if (ACCESS_TOKEN_SECRET === '') throw Error('Missing ACCESS_TOKEN_SECRET')
+        if (!req.body.email || !req.body.password) throw new RequestPayloadError('Request payload is not fulfilled')
         const requestUser = {
             email: req.body.email,
             password: req.body.password
-        }
-
-        if (ACCESS_TOKEN_SECRET === '') {
-            throw Error('Missing ACCESS_TOKEN_SECRET')
         }
 
         // User data validation
@@ -33,26 +24,15 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
             .where('email', requestUser.email)
             .first()
 
-        if (!user) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'User is not registered'
-            })
-            return
-        }
-        if (requestUser.password != user.password) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Incorrect password'
-            })
-            return
-        }
+        if (!user) throw new NotFoundError('User is not registered')
+        if (requestUser.password != user.password) throw new UnauthorizedError('Incorrect password')
 
         const accessToken: string = jwt.sign({
             id: user.id,
             email: user.email,
             username: user.username
         }, ACCESS_TOKEN_SECRET)
+
         res.status(200).json({
             status: responseStatus.success,
             accessToken: accessToken
@@ -65,13 +45,7 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
 export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         // Validate request payload
-        if (!req.body.email || !req.body.username || !req.body.password) {
-            res.status(400).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Request payload is not fulfilled'
-            })
-            return
-        }
+        if (!req.body.email || !req.body.username || !req.body.password) throw new RequestPayloadError('Request payload is not fulfilled')
 
         const user: User = {
             id: uuidv4(),
@@ -80,18 +54,9 @@ export async function register(req: Request, res: Response, next: NextFunction):
             password: req.body.password
         }
 
-        await db('user').insert(user).catch((err: Error) => {
-            const sqlError: string = err.message.split(' - ')[1]
-            if (sqlError.split(' ')[0] === 'Duplicate') {
-                res.status(400).json(<GeneralResponse>{
-                    status: responseStatus.error,
-                    message: 'User already registered'
-                })
-                return
-            }
-            throw Error(sqlError)
-        })
-
+        const isAlreadyRegistered: boolean = (await db<User>('user').select('*').where('email', req.body.email)).length >= 0
+        if (isAlreadyRegistered) throw new UnauthorizedError('User already registered')
+        await db<User>('user').insert(user)
         res.json(<GeneralResponse>{
             status: responseStatus.success,
             message: 'Successfully created new user, please log in'
