@@ -10,3 +10,4 @@ export const DB_PORT: number = parseInt(<string>process.env.DB_PORT ?? 3306, 10)
 export const DB_USER: string = process.env.DB_USER ?? 'root'
 export const DB_PASSWORD: string = process.env.DB_PASSWORD ?? ''
 export const DB_NAME: string = process.env.DB_NAME ?? ''
+export const BCRYPT_SALT_ROUNDS: number = parseInt(<string>process.env.BCRYPT_SALT_ROUNDS ?? 10, 10)

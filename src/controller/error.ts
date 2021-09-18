@@ -12,7 +12,7 @@ export function notFoundRoute(_req: Request, res: Response): void {
 
 /** Handle internal server error (500 error) */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
-export function errorHandlingRoute(error: ErrorRequestHandler, _req: Request, res: Response, _next: NextFunction): void {
+export function errorHandlingController(error: ErrorRequestHandler, _req: Request, res: Response, _next: NextFunction): void {
     let errorCode: number
     if (error instanceof RequestPayloadError) {
         errorCode = 400

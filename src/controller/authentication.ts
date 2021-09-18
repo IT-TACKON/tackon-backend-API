@@ -1,10 +1,11 @@
 import jwt from 'jsonwebtoken'
-import { db } from '../utils/database'
 import { v4 as uuidv4 } from 'uuid'
+import { db } from '../utils/database'
+import { ACCESS_TOKEN_SECRET } from '../utils/env'
+import { hashPassword, isPasswordCorrent } from '../utils/password'
 import { Request, Response, NextFunction } from 'express'
 import { User } from '../interface/user'
 import { GeneralResponse, responseStatus } from '../interface/response'
-import { ACCESS_TOKEN_SECRET } from '../utils/env'
 import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../interface/customError'
 
 
@@ -25,7 +26,7 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
             .first()
 
         if (!user) throw new NotFoundError('User is not registered')
-        if (requestUser.password != user.password) throw new UnauthorizedError('Incorrect password')
+        if (!isPasswordCorrent(requestUser.password, user.password)) throw new UnauthorizedError('Incorrect password')
 
         const accessToken: string = jwt.sign({
             id: user.id,
@@ -44,18 +45,17 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
 
 export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        // Validate request payload
+        // Perform validation
         if (!req.body.email || !req.body.username || !req.body.password) throw new RequestPayloadError('Request payload is not fulfilled')
-
+        const isAlreadyRegistered: boolean = (await db<User>('user').select('*').where('email', req.body.email)).length >= 0
+        if (isAlreadyRegistered) throw new UnauthorizedError('User already registered')
+        const password: string = await hashPassword(req.body.password)
         const user: User = {
             id: uuidv4(),
             email: req.body.email,
             username: req.body.username,
-            password: req.body.password
+            password: password
         }
-
-        const isAlreadyRegistered: boolean = (await db<User>('user').select('*').where('email', req.body.email)).length >= 0
-        if (isAlreadyRegistered) throw new UnauthorizedError('User already registered')
         await db<User>('user').insert(user)
         res.json(<GeneralResponse>{
             status: responseStatus.success,
