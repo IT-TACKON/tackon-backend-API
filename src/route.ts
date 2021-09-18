@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { authenticateToken } from './middleware/token'
 import { register, login } from './controller/authentication'
 import { deleteAccount, getMyProfile, updateMyData } from './controller/user'
+import * as commentController from './controller/comment'
 import * as questionController from './controller/question'
 
 const router: Router = Router()
@@ -19,6 +20,12 @@ router.delete('/questions/:question_id', authenticateToken, questionController.d
 router.post('/questions/upvote/:question_id', authenticateToken, questionController.upvoteQuestion)
 router.post('/questions/downvote/:question_id', authenticateToken, questionController.downvoteQuestion)
 router.get('/questions/search/:keyword', authenticateToken, questionController.getQuestionByKeyword)
+
+// Comments related
+router.get('/questions/:question_id/comments', authenticateToken, commentController.getCommentsByQuestionId)
+router.post('/questions/:question_id/comments', authenticateToken, commentController.postNewComment)
+router.patch('/comments/:comment_id', authenticateToken, commentController.updateComment)
+router.delete('/comments/:comment_id', authenticateToken, commentController.deleteComment)
 
 // User related endpoint
 router.get('/user', authenticateToken, getMyProfile)
