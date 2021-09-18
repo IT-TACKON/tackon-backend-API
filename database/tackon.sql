@@ -33,7 +33,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `tackon`.`question` (
   `id` VARCHAR(36) NOT NULL,
-  `title` VARCHAR(45) NOT NULL,
+  `title` VARCHAR(100) NOT NULL,
   `text` TEXT NOT NULL,
   `upvote` INT NOT NULL DEFAULT 0,
   `created_at` DATETIME NOT NULL,
