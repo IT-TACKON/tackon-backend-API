@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS `tackon`.`user` (
   `id` VARCHAR(36) NOT NULL,
   `username` VARCHAR(45) NOT NULL,
   `email` VARCHAR(320) NOT NULL,
-  `password` VARCHAR(36) NOT NULL,
+  `password` CHAR(60) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE,
   UNIQUE INDEX `email_UNIQUE` (`email` ASC) VISIBLE)
