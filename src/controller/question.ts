@@ -138,13 +138,38 @@ export async function getQuestionByAuthorId(_req: Request, res: Response, next: 
 /** Get single specific question by it's id */
 export async function getQuestionByQuestionId(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const question_id: string = req.params.question_id
-        if (!question_id) throw new RequestPayloadError('Question id is not provided')
-        const question: QuestionWithAuthor = await fetchQuestionWithAuthorById(question_id)
+        const questionId: string = req.params.question_id
+        const question: QuestionWithAuthor = await fetchQuestionWithAuthorById(questionId)
         if (!question) throw new NotFoundError('Question not found')
         res.status(200).json({
             status: responseStatus.success,
             question: question
+        })
+    } catch (error: unknown) {
+        next(error)
+    }
+}
+
+export async function upvoteQuestion(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+        const questionId: string = req.params.question_id
+        await db<Question>('question').where('id', questionId).increment('upvote', 1)
+        res.status(200).json(<GeneralResponse>{
+            status: responseStatus.success,
+            message: 'Successfully vote up question'
+        })
+    } catch (error: unknown) {
+        next(error)
+    }
+}
+
+export async function downvoteQuestion(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+        const questionId: string = req.params.question_id
+        await db<Question>('question').where('id', questionId).decrement('upvote', 1)
+        res.status(200).json(<GeneralResponse>{
+            status: responseStatus.success,
+            message: 'Successfully vote down question'
         })
     } catch (error: unknown) {
         next(error)

@@ -16,6 +16,8 @@ router.post('/questions', authenticateToken, questionController.createNewQuestio
 router.get('/questions/:question_id', authenticateToken, questionController.getQuestionByQuestionId)
 router.patch('/questions/:question_id', authenticateToken, questionController.updateQuestion)
 router.delete('/questions/:question_id', authenticateToken, questionController.deleteQuestion)
+router.post('/questions/upvote/:question_id', authenticateToken, questionController.upvoteQuestion)
+router.post('/questions/downvote/:question_id', authenticateToken, questionController.downvoteQuestion)
 router.get('/questions/search/:keyword', authenticateToken, questionController.getQuestionByKeyword)
 
 // User related endpoint
