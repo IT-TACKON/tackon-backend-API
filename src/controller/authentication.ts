@@ -6,7 +6,7 @@ import { GeneralResponse, responseStatus } from '../model/response'
 import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../model/error'
 import { db } from '../utils/database'
 import { ACCESS_TOKEN_SECRET } from '../utils/env'
-import { hashPassword, isPasswordCorrent } from '../utils/password'
+import { hashPassword, comparePassword } from '../utils/password'
 
 
 export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -26,7 +26,8 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
             .first()
 
         if (!user) throw new NotFoundError('User is not registered')
-        if (!isPasswordCorrent(requestUser.password, user.password)) throw new UnauthorizedError('Incorrect password')
+        const isPasswordCorrect: boolean = await comparePassword(requestUser.password, user.password)
+        if (!isPasswordCorrect) throw new UnauthorizedError('Incorrect password')
 
         const accessToken: string = jwt.sign({
             id: user.id,

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { authenticateToken } from './middleware/token'
+import { authenticateToken } from './middleware'
 import { register, login } from './controller/authentication'
 import { deleteAccount, getMyProfile, updateMyData } from './controller/user'
 import * as commentController from './controller/comment'
@@ -14,7 +14,7 @@ router.post('/register', register)
 // Question related endpoint
 router.get('/questions', authenticateToken, questionController.getQuestions)
 router.post('/questions', authenticateToken, questionController.createNewQuestion)
-router.get('/questions/:question_id', authenticateToken, questionController.getQuestionByQuestionId)
+router.get('/questions/:question_id', authenticateToken, questionController.getQuestionById)
 router.patch('/questions/:question_id', authenticateToken, questionController.updateQuestion)
 router.delete('/questions/:question_id', authenticateToken, questionController.deleteQuestion)
 router.post('/questions/upvote/:question_id', authenticateToken, questionController.upvoteQuestion)

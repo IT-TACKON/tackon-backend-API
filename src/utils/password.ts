@@ -8,6 +8,6 @@ export async function hashPassword(rawPassword: string): Promise<string> {
 }
 
 /** Perform password checking. Returns true if password is match, and vice versa */
-export async function isPasswordCorrent(rawPassword: string, hashedPassword: string): Promise<boolean> {
+export async function comparePassword(rawPassword: string, hashedPassword: string): Promise<boolean> {
     return await bcrypt.compare(rawPassword, hashedPassword)
 }

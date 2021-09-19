@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken'
 import { Request, Response, NextFunction } from 'express'
 import { db } from '../utils/database'
 import { ACCESS_TOKEN_SECRET } from '../utils/env'
-import { hashPassword, isPasswordCorrent } from '../utils/password'
+import { hashPassword, comparePassword } from '../utils/password'
 import { User } from '../model/data'
 import { GeneralResponse, responseStatus } from '../model/response'
 import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../model/error'
@@ -41,7 +41,8 @@ export async function updateMyData(req: Request, res: Response, next: NextFuncti
         let newPassword: string = req.body.newPassword ?? userInDatabase.password
         const currentPassword: string | undefined = req.body.currentPassword
         if (currentPassword) {
-            if (!isPasswordCorrent(currentPassword, userInDatabase.password)) throw new UnauthorizedError('Incorrect password')
+            const isPasswordCorrect: boolean = await comparePassword(currentPassword, userInDatabase.password)
+            if (!isPasswordCorrect) throw new UnauthorizedError('Incorrect password')
             newPassword = await hashPassword(currentPassword)
         }
         const newUser: User = {
@@ -74,7 +75,8 @@ export async function deleteAccount(req: Request, res: Response, next: NextFunct
         if (!userInDatabase) throw new NotFoundError('User is not registered')
         const password: string | undefined = req.body.password
         if (!password) throw new RequestPayloadError('Request payload is not fulfilled')
-        if (!isPasswordCorrent(password, userInDatabase.password)) throw new UnauthorizedError('Incorrect password')
+        const isPasswordCorrect: boolean = await comparePassword(password, userInDatabase.password)
+        if (!isPasswordCorrect) throw new UnauthorizedError('Incorrect password')
         await db<User>('user').where('id', userInDatabase.id).delete()
         res.status(200).json(<GeneralResponse>{
             status: responseStatus.success,
