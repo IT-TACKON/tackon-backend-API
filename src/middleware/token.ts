@@ -1,8 +1,8 @@
-import { Request, Response, NextFunction } from 'express'
 import jwt, { JwtPayload, VerifyErrors } from 'jsonwebtoken'
-import { GeneralResponse, responseStatus } from '../interface/response'
-import { User } from '../interface/user'
+import { Request, Response, NextFunction } from 'express'
 import { db } from '../utils/database'
+import { User } from '../interface/user'
+import { UnauthorizedError } from '../interface/customError'
 import { ACCESS_TOKEN_SECRET } from '../utils/env'
 
 /** Middleware to verify jwt access token.
@@ -12,34 +12,12 @@ import { ACCESS_TOKEN_SECRET } from '../utils/env'
  * */
 export function authenticateToken(req: Request, res: Response, next: NextFunction): void {
     try {
-        const token: string = req.headers['authorization'] ?? ''
-        if (token === '') {
-            res.status(401).json(<GeneralResponse>{
-                status: responseStatus.error,
-                message: 'Cannot recieve or invalid token'
-            })
-            return
-        }
+        const token: string | undefined = req.headers['authorization']
+        if (!token) throw new UnauthorizedError('Cannot recieve or invalid token')
         jwt.verify(token, ACCESS_TOKEN_SECRET, async (err: VerifyErrors | null, user: JwtPayload | undefined) => {
-            if (err || !user) {
-                res.status(403).json(<GeneralResponse>{
-                    status: responseStatus.error,
-                    message: 'Invalid token'
-                })
-                return
-            }
-            const userInDatabase: User | undefined = await db<User>('user')
-                .select('*')
-                .where('email', user.email)
-                .first()
-
-            if (!userInDatabase || userInDatabase.username != user.username) {
-                res.status(400).json(<GeneralResponse>{
-                    status: responseStatus.error,
-                    message: 'Wrong token or user is not registered'
-                })
-                return
-            }
+            if (err || !user) throw new UnauthorizedError('Invalid token')
+            const userInDatabase: User | undefined = await db<User>('user').select('*').where('email', user.email).first()
+            if (!userInDatabase || userInDatabase.username != user.username) throw new UnauthorizedError('Wrong token or user is not registered')
             res.locals.user = user
             next()
         })
