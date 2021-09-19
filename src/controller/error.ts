@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction, ErrorRequestHandler } from 'express'
-import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../interface/customError'
-import { GeneralResponse, responseStatus } from '../interface/response'
+import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../model/error'
+import { GeneralResponse, responseStatus } from '../model/response'
 
 /** Handle request for not registered endpoint (404 Not Found error) */
 export function notFoundRoute(_req: Request, res: Response): void {

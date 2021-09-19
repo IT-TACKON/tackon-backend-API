@@ -1,10 +1,10 @@
-import getCurrentDateTime from '../utils/date'
 import { v4 as uuidv4 } from 'uuid'
 import { Request, Response, NextFunction } from 'express'
-import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../interface/customError'
-import { Question, QuestionWithAuthor } from '../interface/question'
-import { GeneralResponse, responseStatus } from '../interface/response'
-import { db, fetchQuestionWithAuthor, fetchQuestionWithAuthorById } from '../utils/database'
+import { Question } from '../model/data'
+import { GeneralResponse, responseStatus } from '../model/response'
+import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../model/error'
+import getCurrentDateTime from '../utils/date'
+import { db, fetchQuestion } from '../utils/database'
 
 
 /** Create new question. Require title and text from request body */
@@ -91,7 +91,7 @@ export async function deleteQuestion(req: Request, res: Response, next: NextFunc
 /** Fetch all questions data */
 export async function getQuestions(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const questions: QuestionWithAuthor[] = await fetchQuestionWithAuthor()
+        const questions: Question[] = await fetchQuestion()
         res.status(200).json({
             status: responseStatus.success,
             questions: questions
@@ -106,13 +106,10 @@ export async function getQuestionByKeyword(req: Request, res: Response, next: Ne
     try {
         const keyword: string = req.params.keyword
         if (!keyword) throw new RequestPayloadError('Request body is not fulfilled')
-        const questions: QuestionWithAuthor[] = await fetchQuestionWithAuthor()
-        const searchedQuestions: QuestionWithAuthor[] = questions.filter((question: QuestionWithAuthor) => {
-            return question.title.toLowerCase().includes(keyword.toLowerCase())
-        })
+        const questions: Question[] = await fetchQuestion('question.title', keyword)
         res.status(200).json({
             status: responseStatus.success,
-            questions: searchedQuestions
+            questions: questions
         })
     } catch (error: unknown) {
         next(error)
@@ -124,11 +121,10 @@ export async function getQuestionByAuthorId(_req: Request, res: Response, next: 
     try {
         const userId: string = res.locals.user.id
         if (!userId) throw new RequestPayloadError('Author id not identified')
-        const questions: QuestionWithAuthor[] = await fetchQuestionWithAuthor()
-        const userOwnedQuestions: QuestionWithAuthor[] = questions.filter((question: QuestionWithAuthor) => question.user_id == userId)
+        const questions: Question[] = await fetchQuestion('question.user_id', userId)
         res.status(200).json({
             status: responseStatus.success,
-            questions: userOwnedQuestions
+            questions: questions
         })
     } catch (error: unknown) {
         next(error)
@@ -136,11 +132,11 @@ export async function getQuestionByAuthorId(_req: Request, res: Response, next: 
 }
 
 /** Get single specific question by it's id */
-export async function getQuestionByQuestionId(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getQuestionById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const questionId: string = req.params.question_id
-        const question: QuestionWithAuthor = await fetchQuestionWithAuthorById(questionId)
-        if (!question) throw new NotFoundError('Question not found')
+        const question: Question = (await fetchQuestion('question.id', questionId))[0]
+        if (!question) throw new NotFoundError('Question does not exist')
         res.status(200).json({
             status: responseStatus.success,
             question: question

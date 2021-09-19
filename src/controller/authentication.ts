@@ -1,12 +1,12 @@
 import jwt from 'jsonwebtoken'
 import { v4 as uuidv4 } from 'uuid'
+import { Request, Response, NextFunction } from 'express'
+import { User } from '../model/data'
+import { GeneralResponse, responseStatus } from '../model/response'
+import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../model/error'
 import { db } from '../utils/database'
 import { ACCESS_TOKEN_SECRET } from '../utils/env'
 import { hashPassword, isPasswordCorrent } from '../utils/password'
-import { Request, Response, NextFunction } from 'express'
-import { User } from '../interface/user'
-import { GeneralResponse, responseStatus } from '../interface/response'
-import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../interface/customError'
 
 
 export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {

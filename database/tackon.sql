@@ -33,11 +33,12 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `tackon`.`question` (
   `id` VARCHAR(36) NOT NULL,
+  `user_id` VARCHAR(36) NOT NULL,
   `title` VARCHAR(100) NOT NULL,
   `text` TEXT NOT NULL,
   `upvote` INT NOT NULL DEFAULT 0,
   `created_at` DATETIME NOT NULL,
-  `user_id` VARCHAR(36) NOT NULL,
+  `solving_comment_id` VARCHAR(36) NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE,
   INDEX `fk_question_user1_idx` (`user_id` ASC) VISIBLE,
@@ -57,7 +58,6 @@ CREATE TABLE IF NOT EXISTS `tackon`.`comment` (
   `user_id` VARCHAR(36) NOT NULL,
   `question_id` VARCHAR(36) NOT NULL,
   `text` TEXT NOT NULL,
-  `is_solving_question` TINYINT NOT NULL DEFAULT 0,
   `created_at` DATETIME NOT NULL,
   PRIMARY KEY (`user_id`, `question_id`, `id`),
   INDEX `fk_user_has_question_question1_idx` (`question_id` ASC) VISIBLE,

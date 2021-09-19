@@ -1,6 +1,6 @@
 import knex from 'knex'
 import { DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME } from './env'
-import { QuestionWithAuthor } from '../interface/question'
+import { Question } from '../model/data'
 
 export const db = knex({
     client: 'mysql2',
@@ -13,18 +13,23 @@ export const db = knex({
     }
 })
 
-export async function fetchQuestionWithAuthor(): Promise<QuestionWithAuthor[]> {
-    return await db<QuestionWithAuthor>('question')
+/** Fetch data question berserta dengan username author.
+ * Jika parameter `questionId` kosong maka return list semua question 
+ * Jika parameter terisi maka filter dengan `id` tersebut. 
+ * @param filterBy
+ * @param compareWith
+ * @returns Promise<Question[]>
+ */
+export async function fetchQuestion(filterBy?: string | undefined, compareWith?: string | undefined): Promise<Question[]> {
+    if (filterBy && compareWith) {
+        return await db<Question>('question')
+            .join('user', 'user.id', 'question.user_id')
+            .select('question.id', 'user.id as user_id', 'user.username as author', 'question.title', 'question.text', 'question.upvote', 'question.created_at')
+            .orderBy('created_at', 'desc')
+            .where<Question[]>(filterBy, compareWith)
+    }
+    return await db<Question>('question')
         .join('user', 'user.id', 'question.user_id')
         .select('question.id', 'user.id as user_id', 'user.username as author', 'question.title', 'question.text', 'question.upvote', 'question.created_at')
         .orderBy('created_at', 'desc')
-}
-
-export async function fetchQuestionWithAuthorById(questionId: string): Promise<QuestionWithAuthor> {
-    return await db<QuestionWithAuthor>('question')
-        .join('user', 'user.id', 'question.user_id')
-        .select('question.id', 'user.id as user_id', 'user.username as author', 'question.title', 'question.text', 'question.upvote', 'question.created_at')
-        .orderBy('created_at', 'desc')
-        .where('question.id', questionId)
-        .first()
 }

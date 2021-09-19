@@ -1,11 +1,11 @@
 import jwt from 'jsonwebtoken'
-import { db } from '../utils/database'
-import { User } from '../interface/user'
 import { Request, Response, NextFunction } from 'express'
-import { GeneralResponse, responseStatus } from '../interface/response'
+import { db } from '../utils/database'
 import { ACCESS_TOKEN_SECRET } from '../utils/env'
-import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../interface/customError'
 import { hashPassword, isPasswordCorrent } from '../utils/password'
+import { User } from '../model/data'
+import { GeneralResponse, responseStatus } from '../model/response'
+import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../model/error'
 
 /**
  * User information except password is already inside jwt token.

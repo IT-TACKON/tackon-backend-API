@@ -1,11 +1,10 @@
-import Comment from '../interface/comment'
-import getCurrentDateTime from '../utils/date'
-import { db } from '../utils/database'
 import { v4 as uuidv4 } from 'uuid'
-import { Question } from '../interface/question'
-import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../interface/customError'
-import { GeneralResponse, responseStatus } from '../interface/response'
 import { Request, Response, NextFunction } from 'express'
+import { db } from '../utils/database'
+import getCurrentDateTime from '../utils/date'
+import { Comment, Question } from '../model/data'
+import { GeneralResponse, responseStatus } from '../model/response'
+import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../model/error'
 
 /** Fetch list of comments has by specific question */
 export async function getCommentsByQuestionId(req: Request, res: Response, next: NextFunction): Promise<void> {

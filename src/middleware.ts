@@ -1,9 +1,9 @@
 import jwt, { JwtPayload, VerifyErrors } from 'jsonwebtoken'
 import { Request, Response, NextFunction } from 'express'
-import { db } from '../utils/database'
-import { User } from '../interface/user'
-import { UnauthorizedError } from '../interface/customError'
-import { ACCESS_TOKEN_SECRET } from '../utils/env'
+import { User } from './model/data'
+import { UnauthorizedError } from './model/error'
+import { db } from './utils/database'
+import { ACCESS_TOKEN_SECRET } from './utils/env'
 
 /** Middleware to verify jwt access token.
  * Request to endpoint with this middleware must provide jwt token in header with name `authorization`.
