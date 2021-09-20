@@ -24,12 +24,12 @@ export async function fetchQuestion(filterBy?: string | undefined, compareWith?:
     if (filterBy && compareWith) {
         return await db<Question>('question')
             .join('user', 'user.id', 'question.user_id')
-            .select('question.id', 'user.id as user_id', 'user.username as author', 'question.title', 'question.text', 'question.upvote', 'question.created_at')
+            .select('question.id', 'user.id as user_id', 'user.username as author', 'question.title', 'question.text', 'question.upvote', 'question.solving_comment_id', 'question.created_at')
             .orderBy('created_at', 'desc')
             .where<Question[]>(filterBy, compareWith)
     }
     return await db<Question>('question')
         .join('user', 'user.id', 'question.user_id')
-        .select('question.id', 'user.id as user_id', 'user.username as author', 'question.title', 'question.text', 'question.upvote', 'question.created_at')
+        .select('question.id', 'user.id as user_id', 'user.username as author', 'question.title', 'question.text', 'question.upvote', 'question.solving_comment_id', 'question.created_at')
         .orderBy('created_at', 'desc')
 }
