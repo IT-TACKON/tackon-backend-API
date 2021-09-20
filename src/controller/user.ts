@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express'
 import { db } from '../utils/database'
 import { ACCESS_TOKEN_SECRET } from '../utils/env'
 import { hashPassword, comparePassword } from '../utils/password'
-import { User } from '../model/data'
+import { User, Comment, Question } from '../model/data'
 import { GeneralResponse, responseStatus } from '../model/response'
 import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../model/error'
 
@@ -77,6 +77,10 @@ export async function deleteAccount(req: Request, res: Response, next: NextFunct
         if (!password) throw new RequestPayloadError('Request payload is not fulfilled')
         const isPasswordCorrect: boolean = await comparePassword(password, userInDatabase.password)
         if (!isPasswordCorrect) throw new UnauthorizedError('Incorrect password')
+
+        // Delete all table references
+        await db<Comment>('comment').where('user_id', userInDatabase.id).delete()
+        await db<Question>('question').where('user_id', userInDatabase.id).delete()
         await db<User>('user').where('id', userInDatabase.id).delete()
         res.status(200).json(<GeneralResponse>{
             status: responseStatus.success,

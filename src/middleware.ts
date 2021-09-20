@@ -15,13 +15,17 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
         const token: string | undefined = req.headers['authorization']
         if (!token) throw new UnauthorizedError('Cannot recieve or invalid token')
         jwt.verify(token, ACCESS_TOKEN_SECRET, async (err: VerifyErrors | null, user: JwtPayload | undefined) => {
-            if (err || !user) throw new UnauthorizedError('Invalid token')
-            const userInDatabase: User | undefined = await db<User>('user').select('*').where('email', user.email).first()
-            if (!userInDatabase || userInDatabase.username != user.username) throw new UnauthorizedError('Wrong token or user is not registered')
-            res.locals.user = user
-            next()
+            try {
+                if (err || !user) throw new UnauthorizedError('Invalid token')
+                const userInDatabase: User | undefined = await db<User>('user').select('*').where('email', user.email).first()
+                if (!userInDatabase || userInDatabase.username != user.username) throw new UnauthorizedError('Wrong token or user is not registered')
+                res.locals.user = user
+                next()
+            } catch (error: unknown) {
+                next(error)
+            }
         })
-    } catch (error) {
+    } catch (error: unknown) {
         next(error)
     }
 }

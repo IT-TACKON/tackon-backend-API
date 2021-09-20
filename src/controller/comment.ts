@@ -95,6 +95,8 @@ export async function deleteComment(req: Request, res: Response, next: NextFunct
         if (comment.user_id != userId) throw new UnauthorizedError('Cannot delete someone else\'s comment')
 
         await db<Comment>('comment').where('id', commentId).delete()
+        // Remove solving comment in question table if deleted comment is mark as solving before
+        await db<Question>('question').where('solving_comment_id', commentId).update('solving_comment_id', null)
         res.status(200).json(<GeneralResponse>{
             status: responseStatus.success,
             message: 'Successfully deleted comment'

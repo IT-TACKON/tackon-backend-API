@@ -78,6 +78,7 @@ export async function deleteQuestion(req: Request, res: Response, next: NextFunc
         if (!question) throw new NotFoundError('Cannot find question')
         if (userId != question.user_id) throw new UnauthorizedError('User not authorized to delete someone else\'s questions')
 
+        await db<Comment>('comment').where('question_id', questionId).delete() // Delete comment referencees
         await db<Question>('question').where('id', questionId).delete()
         res.status(200).json(<GeneralResponse>{
             status: responseStatus.success,
@@ -183,8 +184,8 @@ export async function updateSolvingComment(req: Request, res: Response, next: Ne
         const commentId: string = req.params.comment_id
         const userId: string = res.locals.user.id
 
-        const comment: Comment | undefined = await db<Comment>('comment').select('*').where('id', commentId).first()
         const question: Question | undefined = await db<Question>('question').select('*').where('id', questionId).first()
+        const comment: Comment | undefined = await db<Comment>('comment').select('*').where({ 'id': commentId, 'question_id': questionId }).first()
         if (!comment || !question) throw new NotFoundError('No such comment or question')
         if (question.user_id != userId) throw new UnauthorizedError('Not authorized to modify someone else\'s comment')
 
