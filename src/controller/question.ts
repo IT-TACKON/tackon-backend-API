@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { Request, Response, NextFunction } from 'express'
-import { Question } from '../model/data'
+import { Question, Comment } from '../model/data'
 import { GeneralResponse, responseStatus } from '../model/response'
 import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../model/error'
 import getCurrentDateTime from '../utils/date'
@@ -170,6 +170,48 @@ export async function downvoteQuestion(req: Request, res: Response, next: NextFu
         res.status(200).json(<GeneralResponse>{
             status: responseStatus.success,
             message: 'Successfully vote down question'
+        })
+    } catch (error: unknown) {
+        next(error)
+    }
+}
+
+/** Mark question as solved and set specific comment id as solving comment */
+export async function updateSolvingComment(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+        const questionId: string = req.params.question_id
+        const commentId: string = req.params.comment_id
+        const userId: string = res.locals.user.id
+
+        const comment: Comment | undefined = await db<Comment>('comment').select('*').where('id', commentId).first()
+        const question: Question | undefined = await db<Question>('question').select('*').where('id', questionId).first()
+        if (!comment || !question) throw new NotFoundError('No such comment or question')
+        if (question.user_id != userId) throw new UnauthorizedError('Not authorized to modify someone else\'s comment')
+
+        await db<Question>('question').where('id', questionId).update('solving_comment_id', commentId)
+        res.status(200).json(<GeneralResponse>{
+            status: responseStatus.success,
+            message: 'Successfully update question as solved'
+        })
+    } catch (error: unknown) {
+        next(error)
+    }
+}
+
+/** Unmark question as solved */
+export async function deleteSolvingComment(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+        const questionId: string = req.params.question_id
+        const userId: string = res.locals.user.id
+
+        const question: Question | undefined = await db<Question>('question').select('*').where('id', questionId).first()
+        if (!question) throw new NotFoundError('No such question')
+        if (question.user_id != userId) throw new UnauthorizedError('Not authorized to modify someone else\'s comment')
+
+        await db<Question>('question').where('id', questionId).update('solving_comment_id', null)
+        res.status(200).json(<GeneralResponse>{
+            status: responseStatus.success,
+            message: 'Successfully remove solved comment'
         })
     } catch (error: unknown) {
         next(error)

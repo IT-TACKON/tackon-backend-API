@@ -22,7 +22,6 @@ export async function getCommentsByQuestionId(req: Request, res: Response, next:
                 'comment.question_id',
                 'user.username as author',
                 'comment.text',
-                'comment.is_solving_question',
                 'comment.created_at'
             )
             .orderBy('created_at', 'desc')
@@ -47,10 +46,9 @@ export async function postNewComment(req: Request, res: Response, next: NextFunc
 
         const commment: Comment = <Comment>{
             id: uuidv4(),
-            question_id: questionId,
             user_id: userId,
+            question_id: questionId,
             text: text,
-            is_solving_question: false,
             created_at: getCurrentDateTime()
         }
 
