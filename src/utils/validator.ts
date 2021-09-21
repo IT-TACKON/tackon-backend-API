@@ -5,7 +5,9 @@ function makePasswordRules(bodyName: string): ValidationChain {
 }
 
 // User Rules
-const emailRules: ValidationChain = body('email').isEmail().withMessage('Email is not valid')
+const emailRules: ValidationChain = body('email')
+    .isEmail().withMessage('Email is not valid')
+    .isLength({ 'max': 320 }).withMessage('Maximum email length is 320 characters')
 const usernameRules: ValidationChain = body('username').isLength({ 'max': 45, 'min': 3 }).withMessage('Username length must between 3-45 character')
 const passwordRules: ValidationChain = makePasswordRules('password')
 const newPasswordRules: ValidationChain = makePasswordRules('newPassword')
