@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken'
 import { v4 as uuidv4 } from 'uuid'
 import { Request, Response, NextFunction } from 'express'
+import { ValidationError, validationResult } from 'express-validator'
 import { User } from '../model/data'
 import { GeneralResponse, responseStatus } from '../model/response'
 import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../model/error'
@@ -11,22 +12,12 @@ import { hashPassword, comparePassword } from '../utils/password'
 
 export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        // Validate request payload
-        if (ACCESS_TOKEN_SECRET === '') throw Error('Missing ACCESS_TOKEN_SECRET')
-        if (!req.body.email || !req.body.password) throw new RequestPayloadError('Request payload is not fulfilled')
-        const requestUser = {
-            email: req.body.email,
-            password: req.body.password
-        }
+        const errors: ValidationError[] = validationResult(req).array()
+        if (errors?.length) throw new RequestPayloadError(errors[0].msg)
 
-        // User data validation
-        const user: User | undefined = await db<User>('user')
-            .select('*')
-            .where('email', requestUser.email)
-            .first()
-
+        const user: User | undefined = await db<User>('user').select('*').where('email', req.body.email).first()
         if (!user) throw new NotFoundError('User is not registered')
-        const isPasswordCorrect: boolean = await comparePassword(requestUser.password, user.password)
+        const isPasswordCorrect: boolean = await comparePassword(req.body.password, user.password)
         if (!isPasswordCorrect) throw new UnauthorizedError('Incorrect password')
 
         const accessToken: string = jwt.sign({
@@ -46,10 +37,11 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
 
 export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        // Perform validation
-        if (!req.body.email || !req.body.username || !req.body.password) throw new RequestPayloadError('Request payload is not fulfilled')
+        const errors: ValidationError[] = validationResult(req).array()
+        if (errors?.length) throw new RequestPayloadError(errors[0].msg)
         const isAlreadyRegistered: boolean = (await db<User>('user').select('*').where('email', req.body.email)).length > 0
-        if (isAlreadyRegistered) throw new UnauthorizedError('User already registered')
+        if (isAlreadyRegistered) throw new UnauthorizedError('Email already used')
+
         const password: string = await hashPassword(req.body.password)
         const user: User = {
             id: uuidv4(),

@@ -1,15 +1,28 @@
 import { Router } from 'express'
+import { body } from 'express-validator'
 import { authenticateToken } from './middleware'
 import { register, login } from './controller/authentication'
 import { deleteAccount, getMyProfile, updateMyData } from './controller/user'
 import * as commentController from './controller/comment'
 import * as questionController from './controller/question'
 
+
 const router: Router = Router()
 
-// Authentication endpoint
-router.post('/login', login)
-router.post('/register', register)
+// User Authentication
+router.post(
+    '/login',
+    body('email').isEmail().withMessage('Email is not valid'),
+    body('password').isLength({ 'min': 8 }).withMessage('Password must be at least 8 character'),
+    login
+)
+router.post(
+    '/register',
+    body('email').isEmail().withMessage('Email is not valid'),
+    body('username').isLength({ 'max': 45, 'min': 3 }).withMessage('Username length must between 3-45 character'),
+    body('password').isLength({ 'min': 8 }).withMessage('Password must be at least 8 character'),
+    register
+)
 
 // Question related endpoint
 router.get('/questions', authenticateToken, questionController.getQuestions)
