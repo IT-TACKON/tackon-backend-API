@@ -13,7 +13,7 @@ Forward engineering model [tackon.mwb](database/tackon.mwb) atau menjalankan SQL
 
 ## Menjalankan Server
 1. Rename file [`placeholder.env`](placeholder.env) menjadi `.env` dan isikan credential
-2. Jalankan `npm i` untuk install semua dependencies
+2. Jalankan `npm i` untuk install semua dependencies.
 3. _(Optional)_ Jalankan `npm run lint` untuk pastikan tidak ada error pada project
 4. _Untuk server produksi_. Jalankan `npm run build` untuk build project, kemudian `npm start` untuk menjalankan server
 5. _Untuk server debug_. Jalankan `npm run debug` untuk menjalankan server
