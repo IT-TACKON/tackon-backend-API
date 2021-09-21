@@ -38,15 +38,38 @@ router.post('/questions/downvote/:question_id', authenticateToken, questionContr
 
 // Comments related
 router.get('/questions/:question_id/comments', authenticateToken, commentController.getCommentsByQuestionId)
-router.post('/questions/:question_id/comments', authenticateToken, commentController.postNewComment)
-router.patch('/comments/:comment_id', authenticateToken, commentController.updateComment)
 router.delete('/comments/:comment_id', authenticateToken, commentController.deleteComment)
+router.post(
+    '/questions/:question_id/comments',
+    authenticateToken,
+    validationRules.commentRules,
+    validateRequestPayload,
+    commentController.postNewComment
+)
+router.patch(
+    '/comments/:comment_id',
+    authenticateToken,
+    validationRules.commentRules,
+    validateRequestPayload,
+    commentController.updateComment
+)
 
 // User related endpoint
 router.get('/user', authenticateToken, getMyProfile)
 router.get('/user/questions', authenticateToken, questionController.getQuestionByAuthorId)
-router.patch('/user', authenticateToken, updateMyData)
-router.delete('/user', authenticateToken, deleteAccount)
-
+router.patch(
+    '/user',
+    authenticateToken,
+    validationRules.updateUserRules,
+    validateRequestPayload,
+    updateMyData
+)
+router.delete(
+    '/user',
+    authenticateToken,
+    validationRules.deleteUserRules,
+    validateRequestPayload,
+    deleteAccount
+)
 
 export default router

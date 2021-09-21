@@ -5,7 +5,7 @@ import { ACCESS_TOKEN_SECRET } from '../utils/env'
 import { hashPassword, comparePassword } from '../utils/password'
 import { User, Comment, Question } from '../model/data'
 import { GeneralResponse, responseStatus } from '../model/response'
-import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../model/error'
+import { NotFoundError, UnauthorizedError } from '../model/error'
 
 /**
  * User information except password is already inside jwt token.
@@ -32,19 +32,20 @@ export function getMyProfile(_req: Request, res: Response, next: NextFunction): 
 export async function updateMyData(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const userInToken = res.locals.user
-        if (!userInToken) throw new UnauthorizedError('Author id not identified')
         const userInDatabase: User | undefined = await db<User>('user').select('*').where('id', userInToken.id).first()
         if (!userInDatabase) throw new NotFoundError('User is not registered')
-        if (!req.body.email && !req.body.username && !req.body.newPassword) throw new RequestPayloadError('Request payload not is fulfilled')
+
         const newEmail: string = req.body.email ?? userInDatabase.email
         const newUsername: string = req.body.username ?? userInDatabase.username
         let newPassword: string = req.body.newPassword ?? userInDatabase.password
         const currentPassword: string | undefined = req.body.currentPassword
+
         if (currentPassword) {
             const isPasswordCorrect: boolean = await comparePassword(currentPassword, userInDatabase.password)
             if (!isPasswordCorrect) throw new UnauthorizedError('Incorrect password')
             newPassword = await hashPassword(currentPassword)
         }
+
         const newUser: User = {
             id: userInDatabase.id,
             email: newEmail,
@@ -70,11 +71,9 @@ export async function updateMyData(req: Request, res: Response, next: NextFuncti
 export async function deleteAccount(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const userInToken = res.locals.user
-        if (!userInToken) throw new UnauthorizedError('Author id not identified')
         const userInDatabase: User | undefined = await db<User>('user').select('*').where('id', userInToken.id).first()
         if (!userInDatabase) throw new NotFoundError('User is not registered')
-        const password: string | undefined = req.body.password
-        if (!password) throw new RequestPayloadError('Request payload is not fulfilled')
+        const password: string = req.body.password
         const isPasswordCorrect: boolean = await comparePassword(password, userInDatabase.password)
         if (!isPasswordCorrect) throw new UnauthorizedError('Incorrect password')
 

@@ -37,10 +37,10 @@ export async function getCommentsByQuestionId(req: Request, res: Response, next:
 /** Post a new comment to a specific question */
 export async function postNewComment(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const userId: string | undefined = res.locals.user.id
-        const text: string | undefined = req.body.text
-        if (!userId || !text) throw new RequestPayloadError('Request payload is not fulfilled')
+        const userId: string = res.locals.user.id
         const questionId: string = req.params.question_id
+        const text: string = req.body.text
+
         const isQuestionExist = await db<Question>('question').select('*').where('id', questionId).first()
         if (!isQuestionExist) throw new NotFoundError('Question does not exist')
 
@@ -67,9 +67,9 @@ export async function updateComment(req: Request, res: Response, next: NextFunct
     try {
         // Perform validation
         const userId: string = res.locals.user.id
-        const text: string | undefined = req.body.text
-        if (!userId || !text) throw new RequestPayloadError('Request payload is not fulfilled')
         const commentId: string = req.params.comment_id
+        const text: string = req.body.text
+
         const comment = await db<Comment>('comment').select('*').where('id', commentId).first()
         if (!comment) throw new NotFoundError('Comment does not exist')
         if (comment.user_id != userId) throw new UnauthorizedError('Cannot edit someone else\'s comment')
