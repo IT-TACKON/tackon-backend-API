@@ -1,9 +1,10 @@
 import jwt, { JwtPayload, VerifyErrors } from 'jsonwebtoken'
 import { Request, Response, NextFunction } from 'express'
 import { User } from './model/data'
-import { UnauthorizedError } from './model/error'
+import { RequestPayloadError, UnauthorizedError } from './model/error'
 import { db } from './utils/database'
 import { ACCESS_TOKEN_SECRET } from './utils/env'
+import { ValidationError, validationResult } from 'express-validator'
 
 /** Middleware to verify jwt access token.
  * Request to endpoint with this middleware must provide jwt token in header with name `authorization`.
@@ -28,4 +29,13 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
     } catch (error: unknown) {
         next(error)
     }
+}
+
+/** Reuseable request payload validator. If errors found then trhow first error as RequestPayloadError
+ * and would be handled by error handling middleware. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function validateRequestPayload(req: Request, _res: Response, next: NextFunction): void {
+    const errors: ValidationError[] = validationResult(req).array()
+    if (errors?.length) throw new RequestPayloadError(errors[0].msg)
+    next()
 }

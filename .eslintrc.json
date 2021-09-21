@@ -14,7 +14,12 @@
         "semi": [2, "never"],
         "no-unused-vars": [
             "error",
-            { "vars": "all", "args": "after-used", "ignoreRestSiblings": false }
+            {
+                "vars": "all",
+                "args": "after-used",
+                "ignoreRestSiblings": false,
+                "argsIgnorePattern": "^_"
+            }
         ],
         "quotes": [2, "single", { "avoidEscape": true }]
     }

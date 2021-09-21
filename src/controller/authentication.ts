@@ -1,10 +1,9 @@
 import jwt from 'jsonwebtoken'
 import { v4 as uuidv4 } from 'uuid'
 import { Request, Response, NextFunction } from 'express'
-import { ValidationError, validationResult } from 'express-validator'
 import { User } from '../model/data'
 import { GeneralResponse, responseStatus } from '../model/response'
-import { NotFoundError, RequestPayloadError, UnauthorizedError } from '../model/error'
+import { NotFoundError, UnauthorizedError } from '../model/error'
 import { db } from '../utils/database'
 import { ACCESS_TOKEN_SECRET } from '../utils/env'
 import { hashPassword, comparePassword } from '../utils/password'
@@ -12,9 +11,6 @@ import { hashPassword, comparePassword } from '../utils/password'
 
 export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const errors: ValidationError[] = validationResult(req).array()
-        if (errors?.length) throw new RequestPayloadError(errors[0].msg)
-
         const user: User | undefined = await db<User>('user').select('*').where('email', req.body.email).first()
         if (!user) throw new NotFoundError('User is not registered')
         const isPasswordCorrect: boolean = await comparePassword(req.body.password, user.password)
@@ -37,8 +33,6 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
 
 export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const errors: ValidationError[] = validationResult(req).array()
-        if (errors?.length) throw new RequestPayloadError(errors[0].msg)
         const isAlreadyRegistered: boolean = (await db<User>('user').select('*').where('email', req.body.email)).length > 0
         if (isAlreadyRegistered) throw new UnauthorizedError('Email already used')
 

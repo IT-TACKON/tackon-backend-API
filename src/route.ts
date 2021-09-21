@@ -1,40 +1,40 @@
 import { Router } from 'express'
-import { body } from 'express-validator'
-import { authenticateToken } from './middleware'
+import { authenticateToken, validateRequestPayload } from './middleware'
 import { register, login } from './controller/authentication'
 import { deleteAccount, getMyProfile, updateMyData } from './controller/user'
 import * as commentController from './controller/comment'
 import * as questionController from './controller/question'
+import * as validationRules from './utils/validator'
 
 
 const router: Router = Router()
 
 // User Authentication
-router.post(
-    '/login',
-    body('email').isEmail().withMessage('Email is not valid'),
-    body('password').isLength({ 'min': 8 }).withMessage('Password must be at least 8 character'),
-    login
-)
-router.post(
-    '/register',
-    body('email').isEmail().withMessage('Email is not valid'),
-    body('username').isLength({ 'max': 45, 'min': 3 }).withMessage('Username length must between 3-45 character'),
-    body('password').isLength({ 'min': 8 }).withMessage('Password must be at least 8 character'),
-    register
-)
+router.post('/login', validationRules.loginRules, validateRequestPayload, login)
+router.post('/register', validationRules.registerRules, validateRequestPayload, register)
 
 // Question related endpoint
 router.get('/questions', authenticateToken, questionController.getQuestions)
-router.post('/questions', authenticateToken, questionController.createNewQuestion)
 router.get('/questions/:question_id', authenticateToken, questionController.getQuestionById)
+router.get('/questions/search/:keyword', authenticateToken, questionController.getQuestionByKeyword)
+router.post('/questions',
+    authenticateToken,
+    validationRules.questionRules,
+    validateRequestPayload,
+    questionController.createNewQuestion
+)
+router.patch(
+    '/questions/:question_id',
+    authenticateToken,
+    validationRules.questionRules,
+    validateRequestPayload,
+    questionController.updateQuestion
+)
+router.delete('/questions/:question_id', authenticateToken, questionController.deleteQuestion)
 router.patch('/questions/:question_id/solving/:comment_id', authenticateToken, questionController.updateSolvingComment)
 router.delete('/questions/:question_id/solving/', authenticateToken, questionController.deleteSolvingComment)
-router.patch('/questions/:question_id', authenticateToken, questionController.updateQuestion)
-router.delete('/questions/:question_id', authenticateToken, questionController.deleteQuestion)
 router.post('/questions/upvote/:question_id', authenticateToken, questionController.upvoteQuestion)
 router.post('/questions/downvote/:question_id', authenticateToken, questionController.downvoteQuestion)
-router.get('/questions/search/:keyword', authenticateToken, questionController.getQuestionByKeyword)
 
 // Comments related
 router.get('/questions/:question_id/comments', authenticateToken, commentController.getCommentsByQuestionId)
@@ -47,5 +47,6 @@ router.get('/user', authenticateToken, getMyProfile)
 router.get('/user/questions', authenticateToken, questionController.getQuestionByAuthorId)
 router.patch('/user', authenticateToken, updateMyData)
 router.delete('/user', authenticateToken, deleteAccount)
+
 
 export default router

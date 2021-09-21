@@ -10,19 +10,12 @@ import { db, fetchQuestion } from '../utils/database'
 /** Create new question. Require title and text from request body */
 export async function createNewQuestion(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        // Validate required request payload
-        const userId: string = res.locals.user.id
-        const title: string = req.body.title
-        const text: string = req.body.text
-        if (!userId) throw new RequestPayloadError('Author id not identified')
-        if (!title || !text) throw new RequestPayloadError('Request body is not fulfilled')
-
         const question: Question = {
             id: uuidv4(),
             created_at: getCurrentDateTime(),
-            user_id: userId,
-            title: title,
-            text: text,
+            user_id: res.locals.user.id,
+            title: req.body.title,
+            text: req.body.text,
             upvote: 0,
         }
         await db<Question>('question').insert(question)
@@ -38,13 +31,8 @@ export async function createNewQuestion(req: Request, res: Response, next: NextF
 /** Update existing title and text question */
 export async function updateQuestion(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        // Validate request payload
         const userId: string = res.locals.user.id
         const questionId: string = req.params.question_id
-        const newTitle: string = req.body.title
-        const newText: string = req.body.text
-        if (!userId) throw new RequestPayloadError('Author id not identified')
-        if (!newTitle || !newText || !questionId) throw new RequestPayloadError('Request body or parameter is not fulfilled')
 
         // Only allow user to update his/her own question
         const question: Question | undefined = await db<Question>('question').select('*').where('id', questionId).first()
@@ -53,7 +41,10 @@ export async function updateQuestion(req: Request, res: Response, next: NextFunc
 
         await db<Question>('question')
             .where('id', questionId)
-            .update({ 'title': newTitle, 'text': newText })
+            .update({
+                'title': req.body.title,
+                'text': req.body.text
+            })
         res.status(200).json(<GeneralResponse>{
             status: responseStatus.success,
             message: 'Successfully updated question'
@@ -212,7 +203,7 @@ export async function deleteSolvingComment(req: Request, res: Response, next: Ne
         await db<Question>('question').where('id', questionId).update('solving_comment_id', null)
         res.status(200).json(<GeneralResponse>{
             status: responseStatus.success,
-            message: 'Successfully remove solved comment'
+            message: 'Successfully update question as unsolved'
         })
     } catch (error: unknown) {
         next(error)
