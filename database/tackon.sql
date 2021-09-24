@@ -41,7 +41,8 @@ CREATE TABLE IF NOT EXISTS `tackon`.`question` (
   `solving_comment_id` VARCHAR(36) NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE,
-  INDEX `fk_question_user1_idx` (`user_id` ASC) VISIBLE,
+  INDEX `fk_question_user1_idx` (`user_id` ASC) INVISIBLE,
+  FULLTEXT INDEX `question_fulltext` (`title`, `text`) VISIBLE,
   CONSTRAINT `fk_question_user1`
     FOREIGN KEY (`user_id`)
     REFERENCES `tackon`.`user` (`id`)

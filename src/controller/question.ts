@@ -98,14 +98,14 @@ export async function getQuestionByKeyword(req: Request, res: Response, next: Ne
     try {
         const keyword: string = req.params.keyword
         if (!keyword) throw new RequestPayloadError('Request body is not fulfilled')
-        const questions: Question[] = await fetchQuestion()
-        // TODO: Can be improved by title text similarity
-        const searchedQuestions: Question[] = questions.filter((question: Question) => {
-            return question.title.toLowerCase().includes(keyword.toLowerCase())
-        })
+        const questions: Question[] = await db('question')
+            .select('question.id', 'user.id as user_id', 'user.username as author', 'question.title', 'question.text', 'question.upvote', 'question.solving_comment_id', 'question.created_at')
+            .whereRaw(`MATCH(title, text) AGAINST("${keyword}" IN NATURAL LANGUAGE MODE)`)
+            .join('user', 'user.id', 'question.user_id')
+            .orderBy('created_at', 'desc')
         res.status(200).json({
             status: responseStatus.success,
-            questions: searchedQuestions
+            questions: questions
         })
     } catch (error: unknown) {
         next(error)
