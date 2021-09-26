@@ -6,7 +6,11 @@
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/IT-TACKON/tackon-backend-API)
 ![GitHub](https://img.shields.io/github/license/IT-TACKON/tackon-backend-API)
 
-Backend REST API untuk aplikasi Tackon. Tackon adalah forum berbasis website untuk tanya jawab seputar akademik.
+Tackon adalah aplikasi berupa forum untuk tanya jawab antar pengguna seputar akademik. Backend REST API untuk aplikasi Tackon, API bertanggung jawab untuk proses autentikasi pengguna dan melakukan interaksi dengan database. [Lihat dokumentasi API](https://docs.google.com/spreadsheets/d/126ti8iUJEdw6Q7MlRLklhBWytQNeGFnRederqeyw364/edit?usp=sharing)
+
+## Requirement
+- Nodejs v14.x
+- MySQL v8.x
 
 ## Setup Database
 
